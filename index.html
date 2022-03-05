@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Rhythm Doctor Custom Levels (Lite)</title>
+		<meta charset="UTF-8">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <style>
+            html * {
+                font-family: apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+            td {
+                font-size: 24px;
+                vertical-align: middle;
+                line-height: 1.2;
+            }
+        </style>
+        <script src="https://rawgit.com/farzher/fuzzysort/master/fuzzysort.js"></script>
+		<script>
+            async function getSheet() {
+                window.addEventListener('DOMContentLoaded', (event) => {
+                    document.getElementById("input").disabled = true;
+                    document.getElementById("input").placeholder = "Loading...";
+                });
+                const sheetURL = "https://script.google.com/macros/s/AKfycbzm3I9ENulE7uOmze53cyDuj7Igi7fmGiQ6w045fCRxs_sK3D4/exec";
+                const stored = await fetch(sheetURL);
+                const responseJSON = await stored.json();
+                document.getElementById("input").disabled = false;
+                document.getElementById("input").placeholder = "Search...";
+                return responseJSON;
+			}
+            
+            const options = {
+                limit: 100, // don't return more results than you need!
+                allowTypo: false,
+                threshold: -999, // don't return bad results
+                keys: ['song', 'artist', 'author', 'description', 'target'],
+                scoreFn: a => Math.max((a[0]?a[0].score:-1000), (a[1]?a[1].score:-1000), (a[2]?a[2].score:-1000), (a[3]?a[3].score:-1000), (a[4]?a[4].score:-1000))
+            }
+            
+			async function findLevels(name) {
+                (await sheet).forEach(o => o.target = o.tags.join(', '));
+                const results = fuzzysort.go(name, await sheet, options);
+                return results;
+            }
+
+            async function formSubmit() {
+                // console.clear();
+                document.getElementById("output").innerHTML = ``;
+                const input = document.getElementById("input").value;
+                const metadata = await findLevels(input);
+                for (var i = 0; i < metadata.length; i++) {
+                    const result = metadata[i];
+                    // console.log(result.score + ' ' + result.obj.song);
+                    getURL(result.obj);
+                }
+            }
+			
+            async function getURL(item) {
+                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url}><b>${item.song}</b> / ${item.artist}</td><td style="text-align: right;">${item.author}</td></tr>`;
+            }
+            
+			const sheet = getSheet();
+		</script>
+	</head>
+	<body class="content container py-6" onload="getSheet()">
+		<input class="input is-large" type="text" id="input" oninput="formSubmit()" placeholder="Search...">
+		<p><table class="table is-striped is-hoverable"><tbody id="output"></tbody></table></p>
+	</body>
+</html>
