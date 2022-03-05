@@ -56,8 +56,14 @@
             }
 			
             async function getURL(item) {
-                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url}><b>${item.song}</b> / ${item.artist}</td><td style="text-align: right;">${item.author}</td></tr>`;
+                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist}</td><td style="text-align: right;">${item.author}</td></tr>`;
             }
+            
+            var sanitizeHTML = function (str) {
+                return str.replace(/[^\w. ]/gi, function (c) {
+                    return '&#' + c.charCodeAt(0) + ';';
+                });
+            };
             
 			const sheet = getSheet();
 		</script>
