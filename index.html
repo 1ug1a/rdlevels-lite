@@ -13,6 +13,24 @@
                 vertical-align: middle;
                 line-height: 1.2;
             }
+            .linkGreen {
+                color: hsla(150, 53%, 48%, 1);
+            }
+            .linkGreen:hover {
+                color: #363636;
+            }
+            .linkRed {
+                color: hsla(349, 53%, 58%, 1);
+            }
+            .linkRed:hover {
+                color: #363636;
+            }
+            .linkBlue {
+                color: hsla(229, 53%, 53%, 1);
+            }
+            .linkBlue:hover {
+                color: #363636;
+            }
         </style>
         <script src="https://rawgit.com/farzher/fuzzysort/master/fuzzysort.js"></script>
 		<script>
@@ -56,7 +74,22 @@
             }
 			
             async function getURL(item) {
-                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist}</td><td style="text-align: right;">${item.author}</td></tr>`;
+                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td></tr>`;
+            }
+            
+            function verified(value) {
+                switch(value) {
+                    case true:
+                        return "linkGreen";
+                    case false:
+                        return "linkRed";
+                    default:
+                        return "linkBlue";
+                }
+            }
+            
+            function seizureWarning(value) {
+                return value ? "⚠️" : "";
             }
             
             var sanitizeHTML = function (str) {
