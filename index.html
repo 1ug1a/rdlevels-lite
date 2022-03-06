@@ -34,6 +34,9 @@
             .content table td {
                 vertical-align: middle;
             }
+            .content table td+td+td {
+                width: 50px;
+            }
         </style>
         <script src="https://rawgit.com/farzher/fuzzysort/master/fuzzysort.js"></script>
         <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
@@ -91,7 +94,7 @@
             }
 			
             async function getURL(item) {
-                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td><td class="p-0 pr-3"><button class="button is-link is-outlined is-small" data-clipboard-text="${item.download_url}">Copy</button></td></tr>`;
+                document.getElementById("output").innerHTML += `<tr><td class="is-four-fifths"><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td><td class="p-0 pr-3"><button class="button is-link is-outlined is-small" data-clipboard-text="${item.download_url}">Copy</button></td></tr>`;
             }
             
             function verified(value) {
