@@ -14,13 +14,13 @@
                 line-height: 1.2;
             }
             .linkGreen {
-                color: hsla(150, 53%, 48%, 1);
+                color: hsla(171, 53%, 33%, 1);
             }
             .linkGreen:hover {
                 color: #363636;
             }
             .linkRed {
-                color: hsla(349, 53%, 58%, 1);
+                color: hsla(348, 53%, 53%, 1);
             }
             .linkRed:hover {
                 color: #363636;
@@ -31,8 +31,12 @@
             .linkBlue:hover {
                 color: #363636;
             }
+            .content table td {
+                vertical-align: middle;
+            }
         </style>
         <script src="https://rawgit.com/farzher/fuzzysort/master/fuzzysort.js"></script>
+        <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
 		<script>
             async function getSheet() {
                 window.addEventListener('DOMContentLoaded', (event) => {
@@ -62,19 +66,32 @@
             }
 
             async function formSubmit() {
-                // console.clear();
+                console.clear();
                 document.getElementById("output").innerHTML = ``;
                 const input = document.getElementById("input").value;
                 const metadata = await findLevels(input);
+                metadata.sort(function(x, y) { 
+                    if (typeof x.obj.verified === 'undefined')
+                        if (typeof y.obj.verified === 'undefined')
+                            return 0;
+                        else
+                            return y.obj.verified * 2 - 1;
+                    else
+                        if (typeof y.obj.verified === 'undefined')
+                            return x.obj.verified * -2 + 1;
+                        else
+                            return y.obj.verified - x.obj.verified;
+                });
                 for (var i = 0; i < metadata.length; i++) {
                     const result = metadata[i];
                     // console.log(result.score + ' ' + result.obj.song);
+                    // console.log(result.obj.verified);
                     getURL(result.obj);
                 }
             }
 			
             async function getURL(item) {
-                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td></tr>`;
+                document.getElementById("output").innerHTML += `<tr><td><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td><td class="p-0 pr-3"><button class="button is-link is-outlined is-small" data-clipboard-text="${item.download_url}">Copy</button></td></tr>`;
             }
             
             function verified(value) {
@@ -105,4 +122,7 @@
 		<input class="input is-large" type="text" id="input" oninput="formSubmit()" placeholder="Search...">
 		<p><table class="table is-striped is-hoverable"><tbody id="output"></tbody></table></p>
 	</body>
+    <script>
+        var clipboard = new ClipboardJS('.button');
+    </script>
 </html>
