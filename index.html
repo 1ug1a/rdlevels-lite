@@ -1,32 +1,49 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Rhythm Doctor Custom Levels (Lite)</title>
-		<meta charset="UTF-8">
+    <head>
+        <title>Rhythm Doctor Custom Levels (Lite)</title>
+        <meta charset="UTF-8">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
         <style>
             html * {
                 font-family: apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+            p {
+                font-size: 12px;
+                line-height: 2.5;
             }
             td {
                 font-size: 24px;
                 vertical-align: middle;
                 line-height: 1.2;
             }
+            td a {
+                margin-bottom: -1em;
+            }
+            td p {
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            .tags:last-child {
+                margin-bottom: 0;
+            }
+            .tags {
+                color: #AAAAAA;
+            }
             .linkGreen {
-                color: hsla(171, 53%, 33%, 1);
+                color: hsl(171, 53%, 33%);
             }
             .linkGreen:hover {
                 color: #363636;
             }
             .linkRed {
-                color: hsla(348, 53%, 53%, 1);
+                color: hsl(348, 53%, 53%);
             }
             .linkRed:hover {
                 color: #363636;
             }
             .linkBlue {
-                color: hsla(229, 53%, 53%, 1);
+                color: hsl(229, 53%, 53%);
             }
             .linkBlue:hover {
                 color: #363636;
@@ -40,9 +57,10 @@
         </style>
         <script src="https://rawgit.com/farzher/fuzzysort/master/fuzzysort.js"></script>
         <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
-		<script>
+        <script>
+            
             async function getSheet() {
-                window.addEventListener('DOMContentLoaded', (event) => {
+                window.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("input").disabled = true;
                     document.getElementById("input").placeholder = "Loading...";
                 });
@@ -52,24 +70,22 @@
                 document.getElementById("input").disabled = false;
                 document.getElementById("input").placeholder = "Search...";
                 return responseJSON;
-			}
-            
-            const options = {
-                limit: 100, // don't return more results than you need!
-                allowTypo: false,
-                threshold: -999, // don't return bad results
-                keys: ['song', 'artist', 'author', 'description', 'target'],
-                scoreFn: a => Math.max((a[0]?a[0].score:-1000), (a[1]?a[1].score:-1000), (a[2]?a[2].score:-1000), (a[3]?a[3].score:-1000), (a[4]?a[4].score:-1000))
             }
-            
-			async function findLevels(name) {
-                (await sheet).forEach(o => o.target = o.tags.join(', '));
+            const options = {
+                limit: 100, // don"t return more results than you need!
+                allowTypo: false,
+                threshold: -200, // don"t return bad results
+                keys: ["song", "artist", "author", "description", "target"],
+                scoreFn: (a) => Math.max((a[0]?a[0].score:-500), (a[1]?a[1].score:-1000), (a[2]?a[2].score:-1000), (a[3]?a[3].score:-2000), (a[4]?a[4].score:-1000))
+            }
+            async function findLevels(name) {
+                (await sheet).forEach(o => o.target = o.tags.join(", "));
                 const results = fuzzysort.go(name, await sheet, options);
                 return results;
             }
-
             async function formSubmit() {
                 console.clear();
+                console.time('search')
                 document.getElementById("output").innerHTML = ``;
                 const input = document.getElementById("input").value;
                 const metadata = await findLevels(input);
@@ -87,16 +103,29 @@
                 });
                 for (var i = 0; i < metadata.length; i++) {
                     const result = metadata[i];
-                    // console.log(result.score + ' ' + result.obj.song);
-                    // console.log(result.obj.verified);
+                    // console.log(result.score + " " + result.obj.song);
+                    console.log(result.obj.verified);
                     getURL(result.obj);
                 }
+                console.timeEnd('search')
             }
-			
             async function getURL(item) {
-                document.getElementById("output").innerHTML += `<tr><td class="is-four-fifths"><a href = ${item.download_url} class=${verified(item.verified)}><b>` + sanitizeHTML(item.song) + `</b> / ${item.artist} ` + seizureWarning(item.seizure_warning) + `</td><td style="text-align: right;">${item.author}</td><td class="p-0 pr-3"><button class="button is-link is-outlined is-small" data-clipboard-text="${item.download_url}">Copy</button></td></tr>`;
+                document.getElementById("output").innerHTML += `
+                    <tr>
+                        <td>
+                            <a href = ${item.download_url} class=${verified(item.verified)}>
+                                <b>${sanitizeHTML(item.song)}</b> / ${item.artist} ${seizureWarning(item.seizure_warning)}
+                            </a>
+                            ${desc ? '<div class="desc"><p>' + item.description + '</p></div>' : ''}
+                            ${tags ? '<div class="tags"><p><i>' + item.target + '</i></p></div>' : ''}
+                        </td>
+                        <td style="text-align: right;">${item.author}</td>
+                        <td class="p-0 pr-3">
+                            <button class="button copy is-link is-outlined is-small" data-clipboard-text="${item.download_url}">Copy</button>
+                        </td>
+                    </tr>
+                `;
             }
-            
             function verified(value) {
                 switch(value) {
                     case true:
@@ -107,25 +136,66 @@
                         return "linkBlue";
                 }
             }
-            
             function seizureWarning(value) {
                 return value ? "⚠️" : "";
             }
-            
+            function toggleDesc() {
+                desc = !desc;
+                formSubmit();
+            }
+            function toggleTags() {
+                tags = !tags;
+                formSubmit();
+            }
             var sanitizeHTML = function (str) {
                 return str.replace(/[^\w. ]/gi, function (c) {
-                    return '&#' + c.charCodeAt(0) + ';';
+                    return "&#" + c.charCodeAt(0) + ";";
                 });
             };
-            
-			const sheet = getSheet();
-		</script>
-	</head>
-	<body class="content container py-6" onload="getSheet()">
-		<input class="input is-large" type="text" id="input" oninput="formSubmit()" placeholder="Search..." autocomplete="off">
-		<p><table class="table is-striped is-hoverable"><tbody id="output"></tbody></table></p>
-	</body>
+            // localStorage.clear();
+            firstTime = localStorage.getItem("first_time");
+            if(!firstTime) {
+                localStorage.setItem("first_time","1");
+                desc = false;
+                tags = false;
+            }
+            window.addEventListener('beforeunload', () => {
+                const search_settings = {
+                    descEnabled: desc,
+                    tagsEnabled: tags
+                };
+                localStorage.setItem('search_settings', JSON.stringify(search_settings));
+            });
+            const raw_settings = localStorage.getItem('search_settings');
+            if(raw_settings) {
+                const { descEnabled, tagsEnabled } = JSON.parse(raw_settings);
+                desc = descEnabled;
+                tags = tagsEnabled;
+            }
+            const sheet = getSheet();
+            var desc;
+            var tags;
+        </script>
+    </head>
+    <body class="content container py-5 px-2">
+        <div class="columns">
+            <div class="column pb-2">
+                <p>
+                    <button class="button is-link is-outlined is-small" onclick="toggleDesc()">Toggle Descriptions</button>&nbsp&nbsp&nbsp&nbsp&nbsp
+                    <button class="button is-link is-outlined is-small" onclick="toggleTags()">Toggle Tags</button>&nbsp&nbsp&nbsp&nbsp
+                    Settings are saved to your cookies.
+                </p>
+            </div>
+            <div class="column">
+                <p style="text-align: right;">
+                    <i>Created by lugi </i>🌊
+                </p>
+            </div>
+        </div>
+        <input class="input is-large" type="text" id="input" oninput="formSubmit()" placeholder="Search..." autocomplete="off">
+        <p><table class="table is-hoverable is-fullwidth"><tbody id="output"></tbody></table></p>
+    </body>
     <script>
-        var clipboard = new ClipboardJS('.button');
+        var clipboard = new ClipboardJS(".copy");
     </script>
 </html>
